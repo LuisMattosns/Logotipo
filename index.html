@@ -14,44 +14,49 @@
 
 <style>
 
-/* RESPONSIVO (mantido, só melhorei o canvas de leve) */
-@media (max-width: 768px){
+/* ================= MOBILE APP STYLE ================= */
+@media (max-width:768px){
 
-  .container{
-    flex-direction: column;
-  }
-
-  .controls{
-    width: 100%;
-  }
-
-  .preview{
-    width: 100%;
-    margin-top: 20px;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+  body{
     overflow:hidden;
   }
 
+  .container{
+    flex-direction:column;
+  }
+
+  /* PREVIEW FIXO */
+  .preview{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:45vh;
+    background:#111;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:10;
+  }
+
   canvas{
-    width: 100%;
-    height: auto;
-    touch-action: none; /* ESSENCIAL pro touch funcionar */
+    width:90%;
+    touch-action:none;
   }
 
-  header h1{
-    font-size: 1.8rem;
+  /* CONTROLES */
+  .controls{
+    position:absolute;
+    bottom:0;
+    width:100%;
+    height:55vh;
+    overflow-y:auto;
+    background:#181818;
+    padding:15px;
+    border-top-left-radius:20px;
+    border-top-right-radius:20px;
   }
 
-  header p{
-    font-size: 0.9rem;
-  }
-
-  input, select, button{
-    width: 100%;
-    margin-bottom: 10px;
-  }
 }
 
 </style>
@@ -71,16 +76,11 @@
 
 <h2>Configurações</h2>
 
-<label>Nome Principal</label>
-<input id="nome" type="text" placeholder="Nome da marca">
+<input id="nome" placeholder="Nome da marca">
+<input id="nome2" placeholder="Texto secundário">
 
-<label>Texto Secundário</label>
-<input id="nome2" type="text" placeholder="Ex: Studio, Company, Tech...">
-
-<label>Cor do Logo</label>
 <input id="cor" type="color" value="#00ffaa">
 
-<label>Estilo</label>
 <select id="estilo">
 <option value="normal">Normal</option>
 <option value="neon">Neon</option>
@@ -89,49 +89,20 @@
 <option value="outline">Outline</option>
 </select>
 
-<label>Fonte</label>
 <select id="fonte">
-<option value="Arial">Arial</option>
-<option value="Verdana">Verdana</option>
-<option value="Courier New">Courier</option>
-<option value="Georgia">Georgia</option>
-<option value="Impact">Impact</option>
-<option value="Montserrat">Montserrat</option>
-<option value="Orbitron">Orbitron</option>
-<option value="Bebas Neue">Bebas Neue</option>
-<option value="Oswald">Oswald</option>
+<option>Arial</option>
+<option>Montserrat</option>
+<option>Orbitron</option>
+<option>Bebas Neue</option>
+<option>Oswald</option>
 </select>
-
-<label>Ícone</label>
-<select id="icone">
-<option value="nenhum">Nenhum</option>
-<option value="estrela">Estrela</option>
-<option value="círculo">Círculo</option>
-<option value="triângulo">Triângulo</option>
-<option value="diamante">Diamante</option>
-</select>
-
-<label>Cor de Fundo</label>
-<input id="bgcolor" type="color" value="#111111">
-
-<label>Cor Fundo 1</label>
-<input id="bgcolor1" type="color" value="#111111">
-
-<label>Cor Fundo 2</label>
-<input id="bgcolor2" type="color" value="#111111">
-
-<label>Ângulo do Fundo</label>
-<input type="range" id="bgangle" min="0" max="360" value="60">
 
 <button onclick="gerarLogo()">Gerar Logo</button>
-<button onclick="baixarLogo()">Baixar PNG</button>
-<button onclick="logoAleatorio()">Logo Aleatório</button>
 
 </div>
 
 <div class="preview">
 <canvas id="canvas" width="700" height="400"></canvas>
-<div id="variacoes"></div>
 </div>
 
 </div>
@@ -140,71 +111,112 @@
 
 <script>
 
-/* TOUCH REAL (sem gambiarra quebrada) */
+/* ================= CONTROLE TOUCH INTELIGENTE ================= */
 
 const canvas = document.getElementById("canvas")
+const ctx = canvas.getContext("2d")
 
-let scale = 1
-let posX = 0
-let posY = 0
+let selected = null
 
-let startX = 0
-let startY = 0
-let lastDistance = null
+let textos = [
+  { id:"main", texto:"NOME", x:350, y:180, size:60 },
+  { id:"sub", texto:"SUB", x:350, y:250, size:30 }
+]
 
-function getDistance(touches){
-  const dx = touches[0].clientX - touches[1].clientX
-  const dy = touches[0].clientY - touches[1].clientY
-  return Math.sqrt(dx*dx + dy*dy)
+/* DESENHAR */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height)
+
+  textos.forEach(t=>{
+    ctx.font = t.size + "px Arial"
+    ctx.fillStyle = "#00ffaa"
+    ctx.textAlign = "center"
+    ctx.fillText(t.texto, t.x, t.y)
+  })
 }
 
-function updateTransform(){
-  canvas.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`
-}
+/* DETECTAR TOQUE */
+function getTouchedText(x,y){
+  for(let t of textos){
+    let width = ctx.measureText(t.texto).width
+    let height = t.size
 
-/* TOQUE INICIAL */
-canvas.addEventListener("touchstart", (e)=>{
-
-  if(e.touches.length === 1){
-    startX = e.touches[0].clientX - posX
-    startY = e.touches[0].clientY - posY
+    if(
+      x > t.x - width/2 &&
+      x < t.x + width/2 &&
+      y > t.y - height &&
+      y < t.y
+    ){
+      return t
+    }
   }
+  return null
+}
+
+/* TOUCH */
+let startDist = null
+
+canvas.addEventListener("touchstart", e=>{
+
+  const rect = canvas.getBoundingClientRect()
+  const x = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width)
+  const y = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height)
+
+  selected = getTouchedText(x,y)
 
   if(e.touches.length === 2){
-    lastDistance = getDistance(e.touches)
+    startDist = getDist(e)
   }
 
-}, { passive:false })
+}, {passive:false})
 
-/* MOVIMENTO */
-canvas.addEventListener("touchmove", (e)=>{
+canvas.addEventListener("touchmove", e=>{
 
   e.preventDefault()
 
+  if(!selected) return
+
+  const rect = canvas.getBoundingClientRect()
+
+  /* MOVER */
   if(e.touches.length === 1){
-    posX = e.touches[0].clientX - startX
-    posY = e.touches[0].clientY - startY
+
+    selected.x = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width)
+    selected.y = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height)
+
   }
 
+  /* ZOOM */
   if(e.touches.length === 2){
-    const dist = getDistance(e.touches)
 
-    if(lastDistance){
-      let delta = dist - lastDistance
-      scale += delta * 0.005
-      scale = Math.max(0.5, Math.min(scale, 3))
+    let newDist = getDist(e)
+
+    if(startDist){
+      let diff = newDist - startDist
+      selected.size += diff * 0.1
+      selected.size = Math.max(10, selected.size)
     }
 
-    lastDistance = dist
+    startDist = newDist
   }
 
-  updateTransform()
+  draw()
 
-}, { passive:false })
+}, {passive:false})
 
 canvas.addEventListener("touchend", ()=>{
-  lastDistance = null
+  selected = null
+  startDist = null
 })
+
+function getDist(e){
+  let dx = e.touches[0].clientX - e.touches[1].clientX
+  let dy = e.touches[0].clientY - e.touches[1].clientY
+  return Math.sqrt(dx*dx + dy*dy)
+}
+
+/* INICIAL */
+draw()
 
 </script>
 
