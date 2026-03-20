@@ -9,8 +9,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Orbitron:wght@600&family=Bebas+Neue&family=Oswald&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="style.css">
-
 <style>
 
 /* BASE */
@@ -19,92 +17,69 @@ body{
   font-family: Arial, sans-serif;
   background:#0f0f0f;
   color:white;
+  overflow:hidden;
 }
 
 header{
   text-align:center;
-  padding:15px;
+  padding:10px;
+  font-size:14px;
 }
 
-/* LAYOUT PADRÃO (PC) */
-.container{
-  display:flex;
-  height:calc(100vh - 80px);
-}
-
-.controls{
-  width:320px;
-  overflow-y:auto;
-  padding:15px;
-  background:#181818;
-}
-
+/* PREVIEW FULL */
 .preview{
-  flex:1;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:55vh;
   display:flex;
   justify-content:center;
   align-items:center;
   background:#111;
+  z-index:10;
 }
 
 canvas{
-  max-width:100%;
-  height:auto;
-  border-radius:10px;
+  width:90%;
+  max-width:600px;
+  border-radius:12px;
+}
+
+/* CONTROLES */
+.controls{
+  position:absolute;
+  bottom:0;
+  width:100%;
+  height:45vh;
+  background:#181818;
+  overflow-y:auto;
+  padding:15px;
+  border-top-left-radius:20px;
+  border-top-right-radius:20px;
 }
 
 /* INPUTS */
 input, select, button{
   width:100%;
-  padding:10px;
-  margin-top:5px;
+  padding:12px;
   margin-bottom:10px;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
 }
 
 button{
   background:#00ffaa;
   font-weight:bold;
-  cursor:pointer;
 }
 
-/* MOBILE DE VERDADE (não essa tentativa anterior) */
-@media (max-width:768px){
-
-  .container{
-    flex-direction:column;
-    height:100vh;
-  }
-
-  /* PREVIEW FIXO EM CIMA */
-  .preview{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:40vh;
-    z-index:10;
-  }
-
-  canvas{
-    width:90%;
-  }
-
-  /* CONTROLES ROLANDO EMBAIXO */
-  .controls{
-    position:absolute;
-    top:40vh;
-    width:100%;
-    height:60vh;
-    overflow-y:auto;
-    border-top:2px solid #222;
-  }
-
-  header{
-    font-size:0.9rem;
-  }
-
+/* DRAG HANDLE (estilo app) */
+.handle{
+  width:60px;
+  height:5px;
+  background:#555;
+  border-radius:10px;
+  margin:0 auto 15px;
 }
 
 </style>
@@ -114,30 +89,23 @@ button{
 <body>
 
 <header>
-<h1>MindVault</h1>
-<p>Crie Logos Profissionais</p>
+<h2>MindVault</h2>
 </header>
-
-<div class="container">
 
 <div class="preview">
 <canvas id="canvas" width="700" height="400"></canvas>
 </div>
 
 <div class="controls">
+<div class="handle"></div>
 
-<h2>Configurações</h2>
+<h3>Configurações</h3>
 
-<label>Nome Principal</label>
-<input id="nome" type="text" placeholder="Nome da marca">
+<input id="nome" placeholder="Nome da marca">
+<input id="nome2" placeholder="Texto secundário">
 
-<label>Texto Secundário</label>
-<input id="nome2" type="text" placeholder="Ex: Studio, Company, Tech...">
-
-<label>Cor do Logo</label>
 <input id="cor" type="color" value="#00ffaa">
 
-<label>Estilo</label>
 <select id="estilo">
 <option value="normal">Normal</option>
 <option value="neon">Neon</option>
@@ -146,20 +114,14 @@ button{
 <option value="outline">Outline</option>
 </select>
 
-<label>Fonte</label>
 <select id="fonte">
-<option value="Arial">Arial</option>
-<option value="Verdana">Verdana</option>
-<option value="Courier New">Courier</option>
-<option value="Georgia">Georgia</option>
-<option value="Impact">Impact</option>
-<option value="Montserrat">Montserrat</option>
-<option value="Orbitron">Orbitron</option>
-<option value="Bebas Neue">Bebas Neue</option>
-<option value="Oswald">Oswald</option>
+<option>Arial</option>
+<option>Montserrat</option>
+<option>Orbitron</option>
+<option>Bebas Neue</option>
+<option>Oswald</option>
 </select>
 
-<label>Ícone</label>
 <select id="icone">
 <option value="nenhum">Nenhum</option>
 <option value="estrela">Estrela</option>
@@ -168,29 +130,71 @@ button{
 <option value="diamante">Diamante</option>
 </select>
 
-<label>Cor de Fundo</label>
 <input id="bgcolor" type="color" value="#111111">
-
-<label>Cor Fundo 1</label>
 <input id="bgcolor1" type="color" value="#111111">
-
-<label>Cor Fundo 2</label>
 <input id="bgcolor2" type="color" value="#111111">
 
-<label>Ângulo do Fundo</label>
 <input type="range" id="bgangle" min="0" max="360" value="60">
 
 <button onclick="gerarLogo()">Gerar Logo</button>
 <button onclick="baixarLogo()">Baixar PNG</button>
 <button onclick="logoAleatorio()">Logo Aleatório</button>
 
-<div id="variacoes"></div>
-
-</div>
-
 </div>
 
 <script src="script.js"></script>
+
+<script>
+
+/* SUPORTE TOUCH + ZOOM (o que tava faltando na tua vida) */
+
+const canvas = document.getElementById("canvas")
+
+let scale = 1
+let posX = 0
+let posY = 0
+
+let lastDistance = null
+
+function getDistance(touches){
+  let dx = touches[0].clientX - touches[1].clientX
+  let dy = touches[0].clientY - touches[1].clientY
+  return Math.sqrt(dx*dx + dy*dy)
+}
+
+/* ARRASTAR */
+canvas.addEventListener("touchmove", function(e){
+
+  if(e.touches.length === 1){
+
+    posX += e.touches[0].movementX || 0
+    posY += e.touches[0].movementY || 0
+
+    canvas.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`
+  }
+
+  /* PINCH ZOOM */
+  if(e.touches.length === 2){
+
+    let dist = getDistance(e.touches)
+
+    if(lastDistance){
+      if(dist > lastDistance) scale += 0.02
+      else scale -= 0.02
+    }
+
+    lastDistance = dist
+
+    canvas.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`
+  }
+
+})
+
+canvas.addEventListener("touchend", ()=>{
+  lastDistance = null
+})
+
+</script>
 
 </body>
 </html>
