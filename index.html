@@ -12,40 +12,101 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
-/* RESPONSIVO */
-@media (max-width: 768px){
+
+/* BASE */
+body{
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#0f0f0f;
+  color:white;
+}
+
+header{
+  text-align:center;
+  padding:15px;
+}
+
+/* LAYOUT PADRÃO (PC) */
+.container{
+  display:flex;
+  height:calc(100vh - 80px);
+}
+
+.controls{
+  width:320px;
+  overflow-y:auto;
+  padding:15px;
+  background:#181818;
+}
+
+.preview{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#111;
+}
+
+canvas{
+  max-width:100%;
+  height:auto;
+  border-radius:10px;
+}
+
+/* INPUTS */
+input, select, button{
+  width:100%;
+  padding:10px;
+  margin-top:5px;
+  margin-bottom:10px;
+  border:none;
+  border-radius:8px;
+}
+
+button{
+  background:#00ffaa;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* MOBILE DE VERDADE (não essa tentativa anterior) */
+@media (max-width:768px){
 
   .container{
-    flex-direction: column;
+    flex-direction:column;
+    height:100vh;
   }
 
-  .controls{
-    width: 100%;
-  }
-
+  /* PREVIEW FIXO EM CIMA */
   .preview{
-    width: 100%;
-    margin-top: 20px;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:40vh;
+    z-index:10;
   }
 
   canvas{
-    width: 100%;
-    height: auto;
+    width:90%;
   }
 
-  header h1{
-    font-size: 1.8rem;
+  /* CONTROLES ROLANDO EMBAIXO */
+  .controls{
+    position:absolute;
+    top:40vh;
+    width:100%;
+    height:60vh;
+    overflow-y:auto;
+    border-top:2px solid #222;
   }
 
-  header p{
-    font-size: 0.9rem;
+  header{
+    font-size:0.9rem;
   }
 
-  input, select, button{
-    width: 100%;
-    margin-bottom: 10px;
-  }
 }
+
 </style>
 
 </head>
@@ -53,23 +114,23 @@
 <body>
 
 <header>
-
 <h1>MindVault</h1>
 <p>Crie Logos Profissionais</p>
-
 </header>
 
 <div class="container">
+
+<div class="preview">
+<canvas id="canvas" width="700" height="400"></canvas>
+</div>
 
 <div class="controls">
 
 <h2>Configurações</h2>
 
-<!-- TEXTO PRINCIPAL -->
 <label>Nome Principal</label>
 <input id="nome" type="text" placeholder="Nome da marca">
 
-<!-- TEXTO SECUNDÁRIO -->
 <label>Texto Secundário</label>
 <input id="nome2" type="text" placeholder="Ex: Studio, Company, Tech...">
 
@@ -78,19 +139,15 @@
 
 <label>Estilo</label>
 <select id="estilo">
-
 <option value="normal">Normal</option>
 <option value="neon">Neon</option>
 <option value="shadow">Sombra</option>
 <option value="3d">3D</option>
 <option value="outline">Outline</option>
-
 </select>
 
-<!-- 🔤 NOVO: FONTES -->
 <label>Fonte</label>
 <select id="fonte">
-
 <option value="Arial">Arial</option>
 <option value="Verdana">Verdana</option>
 <option value="Courier New">Courier</option>
@@ -100,24 +157,20 @@
 <option value="Orbitron">Orbitron</option>
 <option value="Bebas Neue">Bebas Neue</option>
 <option value="Oswald">Oswald</option>
-
 </select>
 
 <label>Ícone</label>
 <select id="icone">
-
 <option value="nenhum">Nenhum</option>
 <option value="estrela">Estrela</option>
 <option value="círculo">Círculo</option>
 <option value="triângulo">Triângulo</option>
 <option value="diamante">Diamante</option>
-
 </select>
 
 <label>Cor de Fundo</label>
 <input id="bgcolor" type="color" value="#111111">
 
-<!-- 🔥 NOVO: FUNDO DIVIDIDO -->
 <label>Cor Fundo 1</label>
 <input id="bgcolor1" type="color" value="#111111">
 
@@ -128,16 +181,8 @@
 <input type="range" id="bgangle" min="0" max="360" value="60">
 
 <button onclick="gerarLogo()">Gerar Logo</button>
-
 <button onclick="baixarLogo()">Baixar PNG</button>
-
 <button onclick="logoAleatorio()">Logo Aleatório</button>
-
-</div>
-
-<div class="preview">
-
-<canvas id="canvas" width="700" height="400"></canvas>
 
 <div id="variacoes"></div>
 
