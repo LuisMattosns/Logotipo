@@ -11,6 +11,43 @@
 
 <link rel="stylesheet" href="style.css">
 
+<style>
+/* RESPONSIVO */
+@media (max-width: 768px){
+
+  .container{
+    flex-direction: column;
+  }
+
+  .controls{
+    width: 100%;
+  }
+
+  .preview{
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  canvas{
+    width: 100%;
+    height: auto;
+  }
+
+  header h1{
+    font-size: 1.8rem;
+  }
+
+  header p{
+    font-size: 0.9rem;
+  }
+
+  input, select, button{
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+</style>
+
 </head>
 
 <body>
@@ -76,9 +113,9 @@
 <option value="diamante">Diamante</option>
 
 </select>
+
 <label>Cor de Fundo</label>
 <input id="bgcolor" type="color" value="#111111">
-
 
 <!-- 🔥 NOVO: FUNDO DIVIDIDO -->
 <label>Cor Fundo 1</label>
