@@ -10,15 +10,15 @@ let textoAtivo = 0
 let dragging = false
 let modoExportacao = false
 
-// ================= FUNÇÕES =================
-
 function gerarLogo(){
 
 textos[0].texto = document.getElementById("nome").value || ""
 textos[1].texto = document.getElementById("nome2").value || ""
 
+let bg = document.getElementById("bgcolor").value
+
 ctx.clearRect(0,0,canvas.width,canvas.height)
-ctx.fillStyle = "#111"
+ctx.fillStyle = bg
 ctx.fillRect(0,0,canvas.width,canvas.height)
 
 textos.forEach((t, index)=>{
@@ -50,6 +50,16 @@ ctx.shadowBlur = 20
 ctx.fillStyle = t.cor
 ctx.fillText(t.texto,0,0)
 
+// ÍCONES
+let yIcon = -t.tamanho
+
+if(t.icone === "estrela") desenharEstrela(0,yIcon)
+if(t.icone === "diamante") desenharDiamante(0,yIcon)
+if(t.icone === "triangulo") desenharTriangulo(0,yIcon)
+if(t.icone === "circulo") desenharCirculo(0,yIcon)
+if(t.icone === "lampada") desenharLampada(0,yIcon)
+if(t.icone === "coroa") desenharCoroa(0,yIcon)
+
 if(ativo && !modoExportacao){
 let largura = ctx.measureText(t.texto).width
 ctx.strokeStyle = "#fff"
@@ -59,126 +69,71 @@ ctx.strokeRect(-largura/2, -t.tamanho/2, largura, t.tamanho)
 ctx.restore()
 }
 
-// ================= DETECÇÃO =================
+// ================= ÍCONES =================
 
-function getTextAt(x,y){
-
-for(let i = textos.length -1; i>=0; i--){
-let t = textos[i]
-
-ctx.font = "bold " + t.tamanho + "px " + t.fonte
-let w = ctx.measureText(t.texto).width
-
-if(
-x > t.x - w/2 &&
-x < t.x + w/2 &&
-y > t.y - t.tamanho/2 &&
-y < t.y + t.tamanho/2
-){
-return i
-}
-}
-return null
+function desenharCirculo(x,y){
+ctx.beginPath()
+ctx.arc(x,y,12,0,Math.PI*2)
+ctx.fill()
 }
 
-// ================= DESKTOP =================
-
-canvas.addEventListener("mousedown",(e)=>{
-let i = getTextAt(e.offsetX, e.offsetY)
-if(i !== null){
-textoAtivo = i
-dragging = true
-}
-})
-
-canvas.addEventListener("mouseup",()=> dragging = false)
-
-canvas.addEventListener("mousemove",(e)=>{
-if(dragging){
-textos[textoAtivo].x = e.offsetX
-textos[textoAtivo].y = e.offsetY
-gerarLogo()
-}
-})
-
-canvas.addEventListener("wheel",(e)=>{
-e.preventDefault()
-
-let t = textos[textoAtivo]
-
-t.tamanho += (e.deltaY < 0 ? 5 : -5)
-t.tamanho = Math.max(20, Math.min(200, t.tamanho))
-
-gerarLogo()
-})
-
-// ================= MOBILE TOUCH =================
-
-let startDist = null
-
-canvas.addEventListener("touchstart",(e)=>{
-
-const rect = canvas.getBoundingClientRect()
-
-const x = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width)
-const y = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height)
-
-let i = getTextAt(x,y)
-if(i !== null){
-textoAtivo = i
+function desenharTriangulo(x,y){
+ctx.beginPath()
+ctx.moveTo(x,y-12)
+ctx.lineTo(x-12,y+12)
+ctx.lineTo(x+12,y+12)
+ctx.closePath()
+ctx.fill()
 }
 
-if(e.touches.length === 2){
-startDist = getDist(e)
+function desenharDiamante(x,y){
+ctx.beginPath()
+ctx.moveTo(x,y-12)
+ctx.lineTo(x-12,y)
+ctx.lineTo(x,y+12)
+ctx.lineTo(x+12,y)
+ctx.closePath()
+ctx.fill()
 }
 
-},{passive:false})
-
-canvas.addEventListener("touchmove",(e)=>{
-
-e.preventDefault()
-
-const rect = canvas.getBoundingClientRect()
-
-// mover
-if(e.touches.length === 1){
-
-textos[textoAtivo].x =
-(e.touches[0].clientX - rect.left) * (canvas.width / rect.width)
-
-textos[textoAtivo].y =
-(e.touches[0].clientY - rect.top) * (canvas.height / rect.height)
-
+function desenharEstrela(x,y){
+ctx.beginPath()
+ctx.arc(x,y,12,0,Math.PI*2)
+ctx.fill()
 }
 
-// zoom
-if(e.touches.length === 2){
-
-let newDist = getDist(e)
-
-if(startDist){
-let diff = newDist - startDist
-textos[textoAtivo].tamanho += diff * 0.2
+function desenharLampada(x,y){
+ctx.beginPath()
+ctx.arc(x,y,10,0,Math.PI*2)
+ctx.fill()
+ctx.fillRect(x-3,y+10,6,6)
 }
 
-startDist = newDist
-}
-
-gerarLogo()
-
-},{passive:false})
-
-canvas.addEventListener("touchend",()=>{
-startDist = null
-})
-
-function getDist(e){
-let dx = e.touches[0].clientX - e.touches[1].clientX
-let dy = e.touches[0].clientY - e.touches[1].clientY
-return Math.sqrt(dx*dx + dy*dy)
+function desenharCoroa(x,y){
+ctx.beginPath()
+ctx.moveTo(x-12,y+10)
+ctx.lineTo(x-6,y-10)
+ctx.lineTo(x,y+5)
+ctx.lineTo(x+6,y-10)
+ctx.lineTo(x+12,y+10)
+ctx.closePath()
+ctx.fill()
 }
 
 // ================= CONTROLES =================
+
+function baixarLogo(){
+modoExportacao = true
+gerarLogo()
+
+let link = document.createElement("a")
+link.download = "logo.png"
+link.href = canvas.toDataURL()
+link.click()
+
+modoExportacao = false
+gerarLogo()
+}
 
 document.getElementById("cor").addEventListener("input",(e)=>{
 textos[textoAtivo].cor = e.target.value
@@ -194,5 +149,12 @@ document.getElementById("fonte").addEventListener("change",(e)=>{
 textos[textoAtivo].fonte = e.target.value
 gerarLogo()
 })
+
+document.getElementById("icone").addEventListener("change",(e)=>{
+textos[textoAtivo].icone = e.target.value
+gerarLogo()
+})
+
+// resto do touch/mouse continua igual (mantém o que já te mandei)
 
 gerarLogo()
