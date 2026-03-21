@@ -9,6 +9,7 @@
 <title>MindVault Logo Forge</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Orbitron:wght@600&family=Bebas+Neue&family=Oswald&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="style.css">
 
 <style>
@@ -97,8 +98,6 @@
 </select>
 
 <button onclick="gerarLogo()">Gerar Logo</button>
-<button onclick="baixarLogo()">Baixar PNG</button>
-<button onclick="logoAleatorio()">Logo Aleatório</button>
 
 </div>
 
@@ -112,7 +111,7 @@
 
 <script>
 
-/* ================= SISTEMA TOUCH REAL ================= */
+/* ================= CONTROLE TOUCH INTELIGENTE ================= */
 
 const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
@@ -124,30 +123,19 @@ let textos = [
   { id:"sub", texto:"SUB", x:350, y:250, size:30 }
 ]
 
-/* SINCRONIZA INPUT */
-document.getElementById("nome").addEventListener("input", e=>{
-  textos[0].texto = e.target.value || "NOME"
-  draw()
-})
-
-document.getElementById("nome2").addEventListener("input", e=>{
-  textos[1].texto = e.target.value || "SUB"
-  draw()
-})
-
 /* DESENHAR */
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height)
 
   textos.forEach(t=>{
     ctx.font = t.size + "px Arial"
-    ctx.fillStyle = document.getElementById("cor").value
+    ctx.fillStyle = "#00ffaa"
     ctx.textAlign = "center"
     ctx.fillText(t.texto, t.x, t.y)
   })
 }
 
-/* DETECTAR TEXTO */
+/* DETECTAR TOQUE */
 function getTouchedText(x,y){
   for(let t of textos){
     let width = ctx.measureText(t.texto).width
@@ -192,8 +180,10 @@ canvas.addEventListener("touchmove", e=>{
 
   /* MOVER */
   if(e.touches.length === 1){
+
     selected.x = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width)
     selected.y = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height)
+
   }
 
   /* ZOOM */
