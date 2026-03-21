@@ -8,7 +8,6 @@ let textos = [
 
 let textoAtivo = 0
 let dragging = false
-let modoExportacao = false
 let startDist = null
 
 // ================= DESENHO =================
@@ -24,9 +23,9 @@ ctx.clearRect(0,0,canvas.width,canvas.height)
 ctx.fillStyle = bg
 ctx.fillRect(0,0,canvas.width,canvas.height)
 
-textos.forEach((t, index)=>{
+textos.forEach((t,i)=>{
 if(t.texto.trim() !== ""){
-desenharTexto(t, index === textoAtivo)
+desenharTexto(t, i === textoAtivo)
 }
 })
 
@@ -39,12 +38,15 @@ ctx.save()
 ctx.translate(t.x, t.y)
 ctx.rotate(t.angulo)
 
+ctx.font = "bold " + t.tamanho + "px " + t.fonte
 ctx.textAlign = "center"
 ctx.textBaseline = "middle"
-ctx.font = "bold " + t.tamanho + "px " + t.fonte
 
+// reset sombra
 ctx.shadowBlur = 0
+ctx.shadowColor = "transparent"
 
+// estilos
 if(t.estilo === "neon"){
 ctx.shadowColor = t.cor
 ctx.shadowBlur = 20
@@ -53,20 +55,60 @@ ctx.shadowBlur = 20
 ctx.fillStyle = t.cor
 ctx.fillText(t.texto,0,0)
 
-// Ícones
-let yIcon = -t.tamanho
+// 🔥 ÍCONES CORRIGIDOS
+ctx.beginPath()
+ctx.shadowBlur = 0 // evita bug visual
 
-if(t.icone === "estrela") desenharCirculo(0,yIcon)
-if(t.icone === "diamante") desenharDiamante(0,yIcon)
-if(t.icone === "triangulo") desenharTriangulo(0,yIcon)
-if(t.icone === "circulo") desenharCirculo(0,yIcon)
-if(t.icone === "lampada") desenharLampada(0,yIcon)
-if(t.icone === "coroa") desenharCoroa(0,yIcon)
+let y = -t.tamanho
 
-if(ativo && !modoExportacao){
-let largura = ctx.measureText(t.texto).width
+if(t.icone === "circulo"){
+ctx.arc(0,y,10,0,Math.PI*2)
+ctx.fill()
+}
+
+if(t.icone === "triangulo"){
+ctx.moveTo(0,y-10)
+ctx.lineTo(-10,y+10)
+ctx.lineTo(10,y+10)
+ctx.closePath()
+ctx.fill()
+}
+
+if(t.icone === "diamante"){
+ctx.moveTo(0,y-10)
+ctx.lineTo(-10,y)
+ctx.lineTo(0,y+10)
+ctx.lineTo(10,y)
+ctx.closePath()
+ctx.fill()
+}
+
+if(t.icone === "estrela"){
+ctx.arc(0,y,10,0,Math.PI*2)
+ctx.fill()
+}
+
+if(t.icone === "lampada"){
+ctx.arc(0,y,8,0,Math.PI*2)
+ctx.fill()
+ctx.fillRect(-3,y+8,6,6)
+}
+
+if(t.icone === "coroa"){
+ctx.moveTo(-12,y+10)
+ctx.lineTo(-6,y-10)
+ctx.lineTo(0,y+5)
+ctx.lineTo(6,y-10)
+ctx.lineTo(12,y+10)
+ctx.closePath()
+ctx.fill()
+}
+
+// caixa seleção
+if(ativo){
+let w = ctx.measureText(t.texto).width
 ctx.strokeStyle = "#fff"
-ctx.strokeRect(-largura/2, -t.tamanho/2, largura, t.tamanho)
+ctx.strokeRect(-w/2, -t.tamanho/2, w, t.tamanho)
 }
 
 ctx.restore()
@@ -76,7 +118,7 @@ ctx.restore()
 
 function getTextAt(x,y){
 
-for(let i = textos.length -1; i>=0; i--){
+for(let i=textos.length-1;i>=0;i--){
 let t = textos[i]
 
 ctx.font = "bold " + t.tamanho + "px " + t.fonte
@@ -97,14 +139,14 @@ return null
 // ================= MOUSE =================
 
 canvas.addEventListener("mousedown",(e)=>{
-let i = getTextAt(e.offsetX, e.offsetY)
-if(i !== null){
+let i = getTextAt(e.offsetX,e.offsetY)
+if(i!==null){
 textoAtivo = i
 dragging = true
 }
 })
 
-canvas.addEventListener("mouseup",()=> dragging = false)
+canvas.addEventListener("mouseup",()=> dragging=false)
 
 canvas.addEventListener("mousemove",(e)=>{
 if(dragging){
@@ -118,16 +160,17 @@ canvas.addEventListener("wheel",(e)=>{
 e.preventDefault()
 
 let t = textos[textoAtivo]
-
-t.tamanho += (e.deltaY < 0 ? 5 : -5)
+t.tamanho += e.deltaY < 0 ? 5 : -5
 t.tamanho = Math.max(20, Math.min(200, t.tamanho))
 
 gerarLogo()
 })
 
-// ================= TOUCH (CELULAR) =================
+// ================= TOUCH =================
 
 canvas.addEventListener("touchstart",(e)=>{
+
+e.preventDefault()
 
 const rect = canvas.getBoundingClientRect()
 
@@ -135,8 +178,9 @@ const x = (e.touches[0].clientX - rect.left) * (canvas.width / rect.width)
 const y = (e.touches[0].clientY - rect.top) * (canvas.height / rect.height)
 
 let i = getTextAt(x,y)
-if(i !== null){
+if(i!==null){
 textoAtivo = i
+dragging = true
 }
 
 if(e.touches.length === 2){
@@ -151,8 +195,7 @@ e.preventDefault()
 
 const rect = canvas.getBoundingClientRect()
 
-// mover
-if(e.touches.length === 1){
+if(e.touches.length === 1 && dragging){
 
 textos[textoAtivo].x =
 (e.touches[0].clientX - rect.left) * (canvas.width / rect.width)
@@ -162,7 +205,6 @@ textos[textoAtivo].y =
 
 }
 
-// zoom
 if(e.touches.length === 2){
 
 let newDist = getDist(e)
@@ -180,9 +222,11 @@ gerarLogo()
 },{passive:false})
 
 canvas.addEventListener("touchend",()=>{
-startDist = null
+dragging=false
+startDist=null
 })
 
+// distância pinch
 function getDist(e){
 let dx = e.touches[0].clientX - e.touches[1].clientX
 let dy = e.touches[0].clientY - e.touches[1].clientY
@@ -211,19 +255,12 @@ textos[textoAtivo].icone = e.target.value
 gerarLogo()
 })
 
-// ================= DOWNLOAD =================
-
+// download
 function baixarLogo(){
-modoExportacao = true
-gerarLogo()
-
 let link = document.createElement("a")
 link.download = "logo.png"
 link.href = canvas.toDataURL()
 link.click()
-
-modoExportacao = false
-gerarLogo()
 }
 
 gerarLogo()
